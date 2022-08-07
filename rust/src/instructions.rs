@@ -1,3 +1,4 @@
+#![allow(unused)]
 enum Instruction {
     // Common Load/Store opcodes
     Lda,
@@ -33,4 +34,3 @@ enum Instruction {
     Beq,
     Bne,
 }
-
