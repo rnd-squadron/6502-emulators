@@ -10,11 +10,11 @@ pub struct Nes {
     pub memory: [u8; 0xFFFF], // 64 Kib
 }
 
-impl Default for Nes { 
+impl Default for Nes {
     fn default() -> Self {
-        Nes { 
+        Nes {
             cpu: Cpu::default(),
-            memory: [0; 0xFFFF]
+            memory: [0; 0xFFFF],
         }
     }
 }
@@ -78,7 +78,6 @@ impl Nes {
 
         self.mem_write_8(address, low);
         self.mem_write_8(address.wrapping_add(1), high);
-
     }
 }
 
@@ -282,11 +281,13 @@ mod test {
         assert_eq!(nes.memory[ADDRESS], 0);
         assert_eq!(nes.memory[ADDRESS + 1], 0);
 
-        nes.memory[ADDRESS] = VALUE_HIGH;
-        nes.memory[ADDRESS + 1] = VALUE_LOW;
+        // Little endian: the 8 least significant bits of an address will be stored
+        // before the 8 most significant bits
+        nes.memory[ADDRESS] = VALUE_LOW;
+        nes.memory[ADDRESS + 1] = VALUE_HIGH;
 
         let data = nes.mem_read_16(ADDRESS as u16);
-        let (low, high) = ((data >> 8) as u8, (data & 0xFF) as u8);
+        let [low, high] = data.to_le_bytes();
 
         assert_eq!(high, VALUE_HIGH);
         assert_eq!(low, VALUE_LOW);
