@@ -10,6 +10,15 @@ pub struct Nes {
     pub memory: [u8; 0xFFFF], // 64 Kib
 }
 
+impl Default for Nes { 
+    fn default() -> Self {
+        Nes { 
+            cpu: Cpu::default(),
+            memory: [0; 0xFFFF]
+        }
+    }
+}
+
 impl Nes {
     pub fn new(cpu: Cpu) -> Self {
         Nes {
@@ -52,7 +61,7 @@ impl Nes {
         self.memory[address as usize]
     }
 
-    pub fn mem_write_8(&mut self, data: u8, address: u16) {
+    pub fn mem_write_8(&mut self, address: u16, data: u8) {
         self.memory[address as usize] = data;
     }
 
@@ -64,11 +73,10 @@ impl Nes {
     }
 
     pub fn mem_write_16(&mut self, address: u16, data: u16) {
-        let low = (data >> 8) as u8;
-        let high = (data & 0xff) as u8;
+        let [high, low] = [(data >> 8) as u8, (data & 0xFF) as u8];
 
-        self.mem_write_8(low, address);
-        self.mem_write_8(high + 1, address);
+        self.mem_write_8(address, low);
+        self.mem_write_8(address + 1, high);
     }
 }
 
@@ -106,8 +114,6 @@ impl Cpu {
         self.register_x = 0;
         self.register_y = 0;
         self.status = 0;
-
-        // self.program_counter = self.
     }
 
     pub fn has_flag(&self, flag: &StatusFlag) -> bool {
@@ -212,8 +218,7 @@ mod test {
 
     #[test]
     fn load_to_rom_from_bytes_test() {
-        let cpu = Cpu::default();
-        let mut nes = Nes::new(cpu);
+        let mut nes = Nes::default();
 
         // Check that the default memory is empty
         assert_eq!(nes.memory, [0; 0xFFFF]);
@@ -242,22 +247,69 @@ mod test {
     }
 
     #[test]
-    fn mem_write_8_test() {
-        unimplemented!()
+    fn mem_write_read_8_test() {
+        const ADDRESS: usize = 0x00FF;
+        const VALUE: u8 = 0x1F;
+
+        let mut nes = Nes::default();
+
+        assert_eq!(nes.memory[ADDRESS], 0);
+
+        nes.mem_write_8(ADDRESS as u16, VALUE);
+
+        assert_eq!(nes.memory[ADDRESS], VALUE);
     }
 
     #[test]
     fn mem_read_8_test() {
-        unimplemented!()
+        const ADDRESS: usize = 0x00FF;
+        const VALUE: u8 = 0x1F;
+
+        let mut nes = Nes::default();
+
+        assert_eq!(nes.memory[ADDRESS], 0);
+
+        nes.memory[ADDRESS] = VALUE;
+
+        assert_eq!(nes.mem_read_8(ADDRESS as u16), VALUE);
     }
 
     #[test]
     fn mem_write_16() {
-        unimplemented!()
+        const ADDRESS: usize = 0xFF1F;
+        const VALUE: u16 = 0x7F1F;
+
+        let mut nes = Nes::default();
+
+        assert_eq!(nes.memory[ADDRESS], 0);
+        assert_eq!(nes.memory[ADDRESS + 1], 0);
+
+        nes.mem_write_16(ADDRESS as u16, VALUE);
+
+        let [high, low] = VALUE.to_be_bytes();
+
+        assert_eq!(nes.memory[ADDRESS], low);
+        assert_eq!(nes.memory[ADDRESS + 1], high);
     }
 
     #[test]
     fn mem_read_16() {
-        unimplemented!()
+        const ADDRESS: usize = 0x00FF;
+        const VALUE_HIGH: u8 = 0x23;
+        const VALUE_LOW: u8 = 0x1F;
+
+        let mut nes = Nes::default();
+
+        assert_eq!(nes.memory[ADDRESS], 0);
+        assert_eq!(nes.memory[ADDRESS + 1], 0);
+
+        nes.memory[ADDRESS] = VALUE_HIGH;
+        nes.memory[ADDRESS + 1] = VALUE_LOW;
+
+        let data = nes.mem_read_16(ADDRESS as u16);
+        let (low, high) = ((data >> 8) as u8, (data & 0xFF) as u8);
+
+        assert_eq!(high, VALUE_HIGH);
+        assert_eq!(low, VALUE_LOW);
     }
 }
