@@ -42,7 +42,8 @@ impl Nes {
     }
 
     pub fn load_rom_from_bytes(&mut self, data: &[u8]) {
-        self.memory[0x8001..0x8001 + data.len()].copy_from_slice(data);
+        // TODO: fix overflow
+        self.memory[0x8000..0x8000 + data.len()].copy_from_slice(data);
     }
 
     pub fn load_rom_from_file(&mut self, filename: String) {
@@ -67,7 +68,7 @@ impl Nes {
 
     pub fn mem_read_16(&self, address: u16) -> u16 {
         let low = self.mem_read_8(address) as u16;
-        let high = self.mem_read_8(address + 1) as u16;
+        let high = self.mem_read_8(address.wrapping_add(1)) as u16;
 
         (high << 8) | low
     }
@@ -76,7 +77,8 @@ impl Nes {
         let [high, low] = [(data >> 8) as u8, (data & 0xFF) as u8];
 
         self.mem_write_8(address, low);
-        self.mem_write_8(address + 1, high);
+        self.mem_write_8(address.wrapping_add(1), high);
+
     }
 }
 
@@ -210,15 +212,15 @@ mod test {
 
         // Check the range in memory to which data is being loaded
         assert_eq!(
-            nes.memory[0x8001..0x8001 + TEST_ROM_SIZE],
+            nes.memory[0x8000..0x8000 + TEST_ROM_SIZE],
             test_rom,
             "The data in the ROM was loaded incorrectly"
         );
 
         // Check the range that should have remained untouched
         assert_eq!(
-            nes.memory[0..0x8000],
-            [0; 0x8000],
+            nes.memory[0..0x7FFF],
+            [0; 0x7FFF],
             "The first 32 KiB should be empty"
         );
     }
