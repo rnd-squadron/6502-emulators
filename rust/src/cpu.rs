@@ -129,29 +129,6 @@ impl Cpu {
     }
 }
 
-#[allow(clippy::upper_case_acronyms)]
-pub struct Rom {
-    cartridge_rom: Vec<u8>,
-}
-
-impl Rom {
-    fn from_file(filename: String) -> Self {
-        let file = fs::File::open(&filename).expect("File not found");
-
-        file.bytes()
-            .take(32_767)
-            .collect::<Result<Vec<u8>, _>>()
-            .map(Rom::from_bytes)
-            .expect("Error processing byte stream for ROM")
-    }
-
-    fn from_bytes(bytes: Vec<u8>) -> Self {
-        Rom {
-            cartridge_rom: bytes,
-        }
-    }
-}
-
 #[derive(EnumIter, Debug)]
 pub enum StatusFlag {
     Carry,
