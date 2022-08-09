@@ -16,3 +16,5 @@ This repository contains implementations of MOS Technology 6502 CPU emulator in 
 - [Emulating a CPU in C++ (6502)](https://www.youtube.com/watch?v=qJgsuQoy9bc)
 - [NES Architecture Explained](https://www.youtube.com/watch?v=PwZEBE66an0)
 - [How we fit an NES game into 40 Kilobytes](https://www.youtube.com/watch?v=ZWQ0591PAxM)
+
+[Repo edited by xXCppMastaXx] <<----------------- EDITED TEXT IN README
