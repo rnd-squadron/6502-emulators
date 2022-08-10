@@ -2,7 +2,6 @@
 #![allow(unused)]
 
 use std::{fs, io::Read, slice};
-
 use strum_macros::EnumIter;
 
 pub struct Nes {
@@ -35,6 +34,10 @@ impl Nes {
 
         // Reset vector: read from $FFFC and $FFFD
         self.cpu.program_counter = self.mem_read_16(0xFFFC);
+    }
+
+    pub fn set_program_counter(&mut self, address: u16) {
+        self.cpu.program_counter = address;
     }
 
     pub fn load(&mut self, data: [u8; 0xFFFF]) {
@@ -78,6 +81,49 @@ impl Nes {
 
         self.mem_write_8(address, low);
         self.mem_write_8(address.wrapping_add(1), high);
+    }
+
+    pub fn get_operand_address(&self, mode: AddressingMode) -> u16 {
+        let program_counter = self.cpu.program_counter;
+
+        match mode {
+            AddressingMode::Immediate => program_counter,
+            AddressingMode::ZeroPage => self.mem_read_8(program_counter) as u16,
+            AddressingMode::ZeroPageX => {
+                let position = self.mem_read_8(program_counter);
+                position.wrapping_add(self.cpu.register_x) as u16
+            }
+            AddressingMode::ZeroPageY => {
+                let position = self.mem_read_8(program_counter);
+                position.wrapping_add(self.cpu.register_y) as u16
+            }
+            AddressingMode::Absolute => self.mem_read_16(program_counter),
+            AddressingMode::AbsoluteX => {
+                let position = self.mem_read_16(program_counter);
+                position.wrapping_add(self.cpu.register_x as u16)
+            }
+            AddressingMode::AbsoluteY => {
+                let position = self.mem_read_16(program_counter);
+                position.wrapping_add(self.cpu.register_y as u16)
+            }
+            AddressingMode::IndexedIndirectX => {
+                let start_address = self.mem_read_8(program_counter);
+                let address = start_address.wrapping_add(self.cpu.register_x) as u16;
+
+                let low = self.mem_read_8(address);
+                let high = self.mem_read_8(address.wrapping_add(1));
+
+                u16::from_le_bytes([low, high])
+            }
+            AddressingMode::IndirectIndexedY => {
+                let address = self.mem_read_8(program_counter) as u16;
+
+                let low = self.mem_read_8(address);
+                let high = self.mem_read_8(address.wrapping_add(1));
+
+                u16::from_le_bytes([low, high]).wrapping_add(self.cpu.register_y as u16)
+            }
+        }
     }
 }
 
@@ -157,24 +203,32 @@ impl StatusFlag {
     }
 }
 
-enum AddressingMode {
-    Implicit,
-    Accumulator,
+/// Instructions need operands to work on.
+/// Addressing modes are various ways that indicate where
+/// the processor should receive these operands.
+///
+/// The list includes only modes that are common to many instructions.
+///
+/// Other modes are specific to specific instructions, namely:
+/// - Implicit: In this mode the operand's value is given in the instruction itself;
+/// - Accumulator: In this mode the instruction operates on data in the
+/// accumulator, so no operands are needed;
+/// - Relative: This mode is used with Branch-on-Condition instructions.
+/// - Indirect: This mode applies only to the JMP instruction - JuMP to new location.
+pub enum AddressingMode {
     Immediate,
     ZeroPage,
-    ZeroPageX(u8),
-    ZeroPageY(u8),
-    Relative,
+    ZeroPageX,
+    ZeroPageY,
     Absolute,
-    AbsoluteX(u8),
-    AbsoluteY(u8),
-    Indirect,
-    IndexedIndirect,
-    IndirectIndexed,
+    AbsoluteX,
+    AbsoluteY,
+    IndexedIndirectX,
+    IndirectIndexedY,
 }
 
 #[cfg(test)]
-mod test {
+mod nes_test {
     use super::{Cpu, Nes, StatusFlag};
     use std::slice;
     use strum::IntoEnumIterator;
@@ -291,5 +345,158 @@ mod test {
 
         assert_eq!(high, VALUE_HIGH);
         assert_eq!(low, VALUE_LOW);
+    }
+}
+
+#[cfg(test)]
+mod addressing_mode_tests {
+    use crate::cpu::Cpu;
+
+    use super::{AddressingMode, Nes};
+
+    #[test]
+    fn addr_mode_immediate_test() {
+        let mut nes = Nes::default();
+        let program_counter = 0xA080;
+
+        nes.set_program_counter(program_counter);
+
+        assert_eq!(
+            nes.get_operand_address(AddressingMode::Immediate),
+            program_counter
+        );
+    }
+
+    #[test]
+    fn addr_mode_absolute_test() {
+        let mut nes = Nes::default();
+        let program_counter = 0xA123;
+        let expected_result = 0xF1;
+
+        nes.set_program_counter(program_counter);
+        nes.mem_write_8(program_counter, expected_result);
+
+        assert_eq!(
+            nes.get_operand_address(AddressingMode::Absolute),
+            expected_result as u16
+        );
+    }
+
+    #[test]
+    fn addr_mode_zero_page_test() {
+        let mut nes = Nes::default();
+        let program_counter = 0x8001;
+        let rom_data = 0x05;
+        let expected_result = 0x43;
+
+        nes.set_program_counter(program_counter);
+        nes.mem_write_8(program_counter, rom_data);
+        nes.mem_write_8(rom_data as u16, expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPage));
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn addr_mode_zero_page_x_test() {
+        let register_x = 0x02;
+        let cpu = Cpu::new(0x0, register_x, 0x0, 0x8001, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data = 0x05;
+        let expected_result = 0x43;
+
+        nes.mem_write_8(nes.cpu.program_counter, rom_data);
+        nes.mem_write_8(rom_data.wrapping_add(register_x) as u16, expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPageX));
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn addr_mode_zero_page_y_test() {
+        let register_y = 0x04;
+        let cpu = Cpu::new(0x0, 0x0, register_y, 0x8001, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data = 0x05;
+        let expected_result = 0x43;
+
+        nes.mem_write_8(nes.cpu.program_counter, rom_data);
+        nes.mem_write_8(rom_data.wrapping_add(register_y) as u16, expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPageY));
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn addr_mode_absolute_x_test() {
+        let register_x = 0x01;
+        let cpu = Cpu::new(0x0, register_x, 0x0, 0x8001, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data: u16 = 0x0200;
+        let expected_result = 0x43;
+
+        nes.mem_write_16(nes.cpu.program_counter, rom_data);
+        nes.mem_write_8(rom_data.wrapping_add(register_x as u16), expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::AbsoluteX));
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn addr_mode_absolute_y_test() {
+        let register_y = 0x04;
+        let cpu = Cpu::new(0x0, 0x0, register_y, 0x8001, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data: u16 = 0x0200;
+        let expected_resukt = 0x43;
+
+        nes.mem_write_16(nes.cpu.program_counter, rom_data);
+        nes.mem_write_8(rom_data.wrapping_add(register_y as u16), expected_resukt);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::AbsoluteY));
+
+        assert_eq!(result, expected_resukt);
+    }
+
+    #[test]
+    fn addr_mode_indexed_indirect_x_test() {
+        let register_x = 0x01;
+        let program_counter = 0x8001;
+        let cpu = Cpu::new(0x0, register_x, 0x0, program_counter, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data = 0x05;
+        let stored_address = 0x0705;
+        let expected_result = 0x1A;
+
+        nes.mem_write_8(program_counter, rom_data);
+        nes.mem_write_16((rom_data as u16).wrapping_add(register_x as u16), stored_address);
+        nes.mem_write_8(stored_address, expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndexedIndirectX));
+
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn addr_mode_indirect_indexed_y_test() {
+        let register_y = 0x02;
+        let program_counter = 0x8001;
+        let cpu = Cpu::new(0x0, 0x0, register_y, program_counter, 0x0, 0x0);
+        let mut nes = Nes::new(cpu);
+        let rom_data = 0x05;
+        let stored_address = 0x0703;
+        let expected_result = 0x1A;
+
+        nes.mem_write_8(program_counter, rom_data);
+        nes.mem_write_16(rom_data as u16, stored_address);
+        nes.mem_write_8(stored_address.wrapping_add(register_y as u16), expected_result);
+
+        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndirectIndexedY));
+
+        assert_eq!(result, expected_result);
     }
 }
