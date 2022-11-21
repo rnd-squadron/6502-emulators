@@ -87,6 +87,7 @@ impl Nes {
         let program_counter = self.cpu.program_counter;
 
         match mode {
+            AddressingMode::Accumulator => todo!("Impl Accumulator"),
             AddressingMode::Immediate => program_counter,
             AddressingMode::ZeroPage => self.mem_read_8(program_counter) as u16,
             AddressingMode::ZeroPageX => {
@@ -106,6 +107,7 @@ impl Nes {
                 let position = self.mem_read_16(program_counter);
                 position.wrapping_add(self.cpu.register_y as u16)
             }
+            AddressingMode::Indirect => todo!("Impl Indirect"),
             AddressingMode::IndexedIndirectX => {
                 let start_address = self.mem_read_8(program_counter);
                 let address = start_address.wrapping_add(self.cpu.register_x) as u16;
@@ -216,6 +218,7 @@ impl StatusFlag {
 /// - Relative: This mode is used with Branch-on-Condition instructions.
 /// - Indirect: This mode applies only to the JMP instruction - JuMP to new location.
 pub enum AddressingMode {
+    Accumulator,
     Immediate,
     ZeroPage,
     ZeroPageX,
@@ -223,6 +226,7 @@ pub enum AddressingMode {
     Absolute,
     AbsoluteX,
     AbsoluteY,
+    Indirect,
     IndexedIndirectX,
     IndirectIndexedY,
 }
@@ -473,7 +477,10 @@ mod addressing_mode_tests {
         let expected_result = 0x1A;
 
         nes.mem_write_8(program_counter, rom_data);
-        nes.mem_write_16((rom_data as u16).wrapping_add(register_x as u16), stored_address);
+        nes.mem_write_16(
+            (rom_data as u16).wrapping_add(register_x as u16),
+            stored_address,
+        );
         nes.mem_write_8(stored_address, expected_result);
 
         let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndexedIndirectX));
@@ -493,7 +500,10 @@ mod addressing_mode_tests {
 
         nes.mem_write_8(program_counter, rom_data);
         nes.mem_write_16(rom_data as u16, stored_address);
-        nes.mem_write_8(stored_address.wrapping_add(register_y as u16), expected_result);
+        nes.mem_write_8(
+            stored_address.wrapping_add(register_y as u16),
+            expected_result,
+        );
 
         let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndirectIndexedY));
 
