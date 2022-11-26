@@ -87,7 +87,7 @@ impl Nes {
         let program_counter = self.cpu.program_counter;
 
         match mode {
-            AddressingMode::Accumulator => todo!("Impl Accumulator"),
+            AddressingMode::Accumulator => self.cpu.accumulator as u16,
             AddressingMode::Immediate => program_counter,
             AddressingMode::ZeroPage => self.mem_read_8(program_counter) as u16,
             AddressingMode::ZeroPageX => {
@@ -107,7 +107,11 @@ impl Nes {
                 let position = self.mem_read_16(program_counter);
                 position.wrapping_add(self.cpu.register_y as u16)
             }
-            AddressingMode::Indirect => todo!("Impl Indirect"),
+            AddressingMode::Indirect => {
+                let address = self.mem_read_16(program_counter);
+
+                u16::from_le(address)
+            },
             AddressingMode::IndexedIndirectX => {
                 let start_address = self.mem_read_8(program_counter);
                 let address = start_address.wrapping_add(self.cpu.register_x) as u16;
@@ -359,6 +363,11 @@ mod addressing_mode_tests {
     use super::{AddressingMode, Nes};
 
     #[test]
+    fn addr_mode_accumulator_test() { 
+        todo!("Implement Accumulator addr. mode");
+    }
+
+    #[test]
     fn addr_mode_immediate_test() {
         let mut nes = Nes::default();
         let program_counter = 0xA080;
@@ -464,6 +473,11 @@ mod addressing_mode_tests {
         let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::AbsoluteY));
 
         assert_eq!(result, expected_resukt);
+    }
+
+    #[test]
+    fn addr_mode_indirect_test() { 
+        todo!("Implement Indirect addr. mode");
     }
 
     #[test]
