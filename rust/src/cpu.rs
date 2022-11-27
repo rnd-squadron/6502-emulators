@@ -135,12 +135,12 @@ impl Nes {
 
 #[derive(Default)]
 pub struct Cpu {
-    accumulator: u8,
-    register_x: u8,
-    register_y: u8,
-    program_counter: u16,
-    status: u8,
-    stack_pointer: u8,
+    pub accumulator: u8,
+    pub register_x: u8,
+    pub register_y: u8,
+    pub program_counter: u16,
+    pub status: u8,
+    pub stack_pointer: u8,
 }
 
 impl Cpu {
@@ -180,6 +180,14 @@ impl Cpu {
     pub fn disable_flag(&mut self, flag: &StatusFlag) {
         self.status ^= flag.bit_shift();
     }
+
+    pub fn update_flag(&mut self, flag: &StatusFlag, is_enable: bool) {
+        if is_enable { 
+            self.enable_flag(flag)
+        }else {
+            self.disable_flag(flag)
+        }
+    } 
 }
 
 #[derive(EnumIter, Debug)]
