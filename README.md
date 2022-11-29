@@ -2,14 +2,6 @@
 
 This repository contains implementations of MOS Technology 6502 CPU emulator in different languages.
 
-## Todo
-- [ ] **CPU** 
-  - [x] Implement a basic CPU implementation
-  - [x] Implement tests for CPU
-  - [ ] Implement a set of instructions
-- [ ] **GPU**
-- [ ] **APU**
-
 ## Useful materials
 
 ### Links

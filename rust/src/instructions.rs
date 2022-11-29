@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, iter::Cycle};
 
-use crate::cpu::AddressingMode;
+use crate::cpu::{AddressingMode, Cpu, Nes, StatusFlag};
 enum Instruction {
     // Common Load/Store opcodes
     Lda,
@@ -219,6 +219,15 @@ impl OpCode {
             0x8C => OpCode::new(code, Instruction::Sty, 3, 4, AddressingMode::Absolute),
             _ => panic!("Opcode not found! Opcode: {:x}", code)
         }
+    }
+
+    fn lda(self, nes: &mut Nes) { 
+        let address = nes.get_operand_address(self.address_mode);
+        let value = nes.mem_read_8(address);
+        
+        nes.cpu.accumulator = value;
+        nes.cpu.update_flag(&StatusFlag::Zero, value == 0);
+        nes.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
     }
 }
 

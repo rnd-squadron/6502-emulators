@@ -5,3 +5,13 @@
 **Frank Castle, 'Punisher (S2:E9)'**
 
 This repository contains implementation written in Rust.
+
+## Todo
+
+- [ ] **CPU** 
+  - [x] Implement a basic CPU implementation
+  - [x] Implement tests for CPU
+  - [x] Implement a set of instructions
+  - [ ] Add support unofficial instructions
+- [ ] **GPU**
+- [ ] **APU**
