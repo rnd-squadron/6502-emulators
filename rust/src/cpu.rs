@@ -111,7 +111,7 @@ impl Nes {
                 let address = self.mem_read_16(program_counter);
 
                 u16::from_le(address)
-            },
+            }
             AddressingMode::IndexedIndirectX => {
                 let start_address = self.mem_read_8(program_counter);
                 let address = start_address.wrapping_add(self.cpu.register_x) as u16;
@@ -182,12 +182,12 @@ impl Cpu {
     }
 
     pub fn update_flag(&mut self, flag: &StatusFlag, is_enable: bool) {
-        if is_enable { 
+        if is_enable {
             self.enable_flag(flag)
-        }else {
+        } else {
             self.disable_flag(flag)
         }
-    } 
+    }
 }
 
 #[derive(EnumIter, Debug)]
@@ -371,7 +371,7 @@ mod addressing_mode_tests {
     use super::{AddressingMode, Nes};
 
     #[test]
-    fn addr_mode_accumulator_test() { 
+    fn addr_mode_accumulator_test() {
         todo!("Implement Accumulator addr. mode");
     }
 
@@ -484,7 +484,7 @@ mod addressing_mode_tests {
     }
 
     #[test]
-    fn addr_mode_indirect_test() { 
+    fn addr_mode_indirect_test() {
         todo!("Implement Indirect addr. mode");
     }
 

@@ -221,10 +221,10 @@ impl OpCode {
         }
     }
 
-    fn lda(self, nes: &mut Nes) { 
+    fn lda(self, nes: &mut Nes) {
         let address = nes.get_operand_address(self.address_mode);
         let value = nes.mem_read_8(address);
-        
+
         nes.cpu.accumulator = value;
         nes.cpu.update_flag(&StatusFlag::Zero, value == 0);
         nes.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
