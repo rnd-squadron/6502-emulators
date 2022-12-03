@@ -3,6 +3,7 @@
 use std::{collections::HashMap, iter::Cycle};
 
 use crate::cpu::{AddressingMode, Cpu, Nes, StatusFlag};
+
 enum Instruction {
     // Common Load/Store opcodes
     Lda,
@@ -79,7 +80,7 @@ impl OpCode {
     #[rustfmt::skip]
     fn from_byte(code: u8) -> OpCode {
         match(code) {
-            // ADC
+            // ADC - Add Memory to Accumulator with Carry
             0x69 => OpCode::new(code, Instruction::Adc, 2, 2, AddressingMode::Immediate),
             0x65 => OpCode::new(code, Instruction::Adc, 2, 3, AddressingMode::ZeroPage),
             0x75 => OpCode::new(code, Instruction::Adc, 2, 4, AddressingMode::ZeroPageX),
@@ -88,7 +89,7 @@ impl OpCode {
             0x79 => OpCode::new(code, Instruction::Adc, 3, 4, AddressingMode::AbsoluteY), // *
             0x61 => OpCode::new(code, Instruction::Adc, 2, 6, AddressingMode::IndexedIndirectX),
             0x71 => OpCode::new(code, Instruction::Adc, 2, 5, AddressingMode::IndirectIndexedY), // *
-            // AND
+            // AND - AND Memory with Accumulator
             0x29 => OpCode::new(code, Instruction::And, 2, 2, AddressingMode::Immediate),
             0x25 => OpCode::new(code, Instruction::And, 2, 3, AddressingMode::ZeroPage),
             0x35 => OpCode::new(code, Instruction::And, 2, 4, AddressingMode::ZeroPageX),
@@ -97,13 +98,13 @@ impl OpCode {
             0x39 => OpCode::new(code, Instruction::And, 3, 4, AddressingMode::AbsoluteY), // *
             0x21 => OpCode::new(code, Instruction::And, 2, 6, AddressingMode::IndexedIndirectX),
             0x31 => OpCode::new(code, Instruction::And, 2, 5, AddressingMode::IndexedIndirectX), // *
-            // ASL
+            // ASL - Shift Left One Bit (Memory or Accumulator)
             0x0A => OpCode::new(code, Instruction::Asl, 1, 2, AddressingMode::Accumulator),
             0x06 => OpCode::new(code, Instruction::Asl, 2, 5, AddressingMode::ZeroPage),
             0x16 => OpCode::new(code, Instruction::Asl, 2, 6, AddressingMode::ZeroPageX),
             0x0E => OpCode::new(code, Instruction::Asl, 3, 6, AddressingMode::Absolute),
             0x1E => OpCode::new(code, Instruction::Asl, 3, 7, AddressingMode::AbsoluteX),
-            // CMP
+            // CMP - Compare Memory with Accumulator
             0xC9 => OpCode::new(code, Instruction::Cmp, 2, 2, AddressingMode::Immediate),
             0xC5 => OpCode::new(code, Instruction::Cmp, 2, 3, AddressingMode::ZeroPage),
             0xD5 => OpCode::new(code, Instruction::Cmp, 2, 4, AddressingMode::ZeroPageX),
@@ -112,11 +113,11 @@ impl OpCode {
             0xD9 => OpCode::new(code, Instruction::Cmp, 3, 4, AddressingMode::AbsoluteY), // *
             0xC1 => OpCode::new(code, Instruction::Cmp, 2, 6, AddressingMode::IndexedIndirectX),
             0xD1 => OpCode::new(code, Instruction::Cmp, 2, 5, AddressingMode::IndirectIndexedY), // *
-            // CPX
+            // CPX - Compare Memory and Index X
             0xE0 => OpCode::new(code, Instruction::Cpx, 2, 2, AddressingMode::Immediate),
             0xE4 => OpCode::new(code, Instruction::Cpx, 2, 3, AddressingMode::ZeroPage),
             0xEC => OpCode::new(code, Instruction::Cpx, 3, 4, AddressingMode::Absolute),
-            // CPY
+            // CPY - Compare Memory and Index Y
             0xC0 => OpCode::new(code, Instruction::Cpy, 2, 2, AddressingMode::Immediate),
             0xC4 => OpCode::new(code, Instruction::Cpy, 2, 3, AddressingMode::ZeroPage),
             0xCC => OpCode::new(code, Instruction::Cpy, 3, 4, AddressingMode::Absolute),
