@@ -4,6 +4,8 @@
 use std::{fs, io::Read, slice};
 use strum_macros::EnumIter;
 
+use crate::instructions::OpCode;
+
 pub struct Nes {
     pub cpu: Cpu,
     pub memory: [u8; 0xFFFF], // 64 Kib
@@ -130,6 +132,33 @@ impl Nes {
                 u16::from_le_bytes([low, high]).wrapping_add(self.cpu.register_y as u16)
             }
         }
+    }
+
+    fn lda(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        self.cpu.accumulator = value;
+        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
+        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+    }
+
+    fn ldx(&mut self, opcode: OpCode) {
+        let adderss = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(adderss);
+
+        self.cpu.register_x = value;
+        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
+        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+    }
+
+    fn ldy(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        self.cpu.register_y = value;
+        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
+        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
     }
 }
 
