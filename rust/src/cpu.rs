@@ -160,6 +160,24 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Zero, value == 0);
         self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
     }
+
+    fn sta(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+
+        self.mem_write_8(address, self.cpu.accumulator);
+    }
+
+    fn stx(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+
+        self.mem_write_8(address, self.cpu.register_x)
+    }
+
+    fn sty(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+
+        self.mem_write_8(address, self.cpu.register_x)
+    }
 }
 
 #[derive(Default)]
