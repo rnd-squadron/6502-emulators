@@ -1,7 +1,7 @@
 // TODO: Remove this lint rules
 #![allow(unused)]
 
-use std::{fs, io::Read, slice};
+use std::{cmp, fs, io::Read, slice};
 use strum_macros::EnumIter;
 
 use crate::instructions::OpCode;
@@ -253,6 +253,13 @@ impl Nes {
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator ^= value;
+        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
+        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+    }
+
+    fn inx(&mut self, opcode: OpCode) {
+        let (result, is_overflow) = self.cpu.register_x.overflowing_add(1);
+        self.cpu.register_x = result;
     }
 }
 
