@@ -140,8 +140,7 @@ impl Nes {
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator = value;
-        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(value);
     }
 
     fn ldx(&mut self, opcode: OpCode) {
@@ -149,8 +148,7 @@ impl Nes {
         let value = self.mem_read_8(adderss);
 
         self.cpu.register_x = value;
-        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(value);
     }
 
     fn ldy(&mut self, opcode: OpCode) {
@@ -158,8 +156,7 @@ impl Nes {
         let value = self.mem_read_8(address);
 
         self.cpu.register_y = value;
-        self.cpu.update_flag(&StatusFlag::Zero, value == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, value >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(value);
     }
 
     fn sta(&mut self, opcode: OpCode) {
@@ -182,38 +179,24 @@ impl Nes {
 
     fn tax(&mut self, opcode: OpCode) {
         self.cpu.register_x = self.cpu.accumulator;
-
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
     fn tay(&mut self, opcode: OpCode) {
         self.cpu.register_y = self.cpu.accumulator;
-
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(self.cpu.register_y);
     }
 
     fn txa(&mut self, opcode: OpCode) {
         self.cpu.accumulator = self.cpu.register_x;
-
         self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+            .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     fn tya(&mut self, opcode: OpCode) {
         self.cpu.accumulator = self.cpu.register_y;
-
         self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+            .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     fn txs(&mut self, opcode: OpCode) {
@@ -222,11 +205,7 @@ impl Nes {
 
     fn tsx(&mut self, opcode: OpCode) {
         self.cpu.register_x = self.cpu.stack_pointer;
-
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
     // Addition
@@ -242,9 +221,7 @@ impl Nes {
 
         self.cpu.accumulator &= value;
         self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+            .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     fn ora(&mut self, opcode: OpCode) {
@@ -253,9 +230,7 @@ impl Nes {
 
         self.cpu.accumulator |= value;
         self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+            .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     fn eor(&mut self, opcode: OpCode) {
@@ -263,10 +238,7 @@ impl Nes {
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator ^= value;
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     // Operations for incrementing and decrementing the index registers
@@ -274,40 +246,28 @@ impl Nes {
         let (result, _) = self.cpu.register_x.overflowing_add(1);
 
         self.cpu.register_x = result;
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 
     fn iny(&mut self, opcode: OpCode) {
-        let (result, _) = self.cpu.register_x.overflowing_add(1);
+        let (result, _) = self.cpu.register_y.overflowing_add(1);
 
         self.cpu.register_y = result;
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 
     fn dex(&mut self, opcode: OpCode) {
         let (result, _) = self.cpu.register_x.overflowing_sub(1);
 
         self.cpu.register_x = result;
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 
     fn dey(&mut self, opcode: OpCode) {
-        let (result, _) = self.cpu.register_x.overflowing_sub(1);
+        let (result, _) = self.cpu.register_y.overflowing_sub(1);
 
         self.cpu.register_y = result;
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 
     // Operations for incrementing and decrementing memory
@@ -317,11 +277,7 @@ impl Nes {
         let (result, _) = value.overflowing_add(1);
 
         self.mem_write_8(address, result);
-
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 
     fn dec(&mut self, opcode: OpCode) {
@@ -330,11 +286,7 @@ impl Nes {
         let (result, _) = value.overflowing_sub(1);
 
         self.mem_write_8(address, result);
-
-        self.cpu
-            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu
-            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
     }
 }
 
@@ -392,6 +344,11 @@ impl Cpu {
         } else {
             self.disable_flag(flag)
         }
+    }
+
+    pub fn update_zero_and_negative_flags(&mut self, value: u8) {
+        self.update_flag(&StatusFlag::Zero, value == 0);
+        self.update_flag(&StatusFlag::Negative, value >> 7 == 1);
     }
 }
 
