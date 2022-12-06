@@ -1,7 +1,7 @@
 // TODO: Remove this lint rules
 #![allow(unused)]
 
-use std::{fs, io::Read, slice, cmp};
+use std::{cmp, fs, io::Read, slice};
 use strum_macros::EnumIter;
 
 use crate::instructions::OpCode;
@@ -134,6 +134,7 @@ impl Nes {
         }
     }
 
+    //Operations for transferring bytes of data
     fn lda(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
@@ -228,51 +229,112 @@ impl Nes {
             .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
     }
 
-    fn adc(&mut self, opcode: OpCode) { 
-        
-    }
+    // Addition
+    fn adc(&mut self, opcode: OpCode) {}
 
-    fn and(&mut self, opcode: OpCode) { 
+    // Subtraction
+    fn sub(&mut self, opcode: OpCode) {}
+
+    // Bitwise operations
+    fn and(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator &= value;
-        self.cpu.update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
     }
 
-    fn ora(&mut self, opcode: OpCode) { 
+    fn ora(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator |= value;
-        self.cpu.update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
     }
 
-    fn eor(&mut self, opcode: OpCode) { 
+    fn eor(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator ^= value;
-        self.cpu.update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.accumulator == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.accumulator >> 7 == 1);
     }
 
+    // Operations for incrementing and decrementing the index registers
     fn inx(&mut self, opcode: OpCode) {
         let (result, _) = self.cpu.register_x.overflowing_add(1);
-        
+
         self.cpu.register_x = result;
-        self.cpu.update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
     }
-    
+
     fn iny(&mut self, opcode: OpCode) {
         let (result, _) = self.cpu.register_x.overflowing_add(1);
-        
+
         self.cpu.register_y = result;
-        self.cpu.update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
-        self.cpu.update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+    }
+
+    fn dex(&mut self, opcode: OpCode) {
+        let (result, _) = self.cpu.register_x.overflowing_sub(1);
+
+        self.cpu.register_x = result;
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_x == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_x >> 7 == 1);
+    }
+
+    fn dey(&mut self, opcode: OpCode) {
+        let (result, _) = self.cpu.register_x.overflowing_sub(1);
+
+        self.cpu.register_y = result;
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+    }
+
+    // Operations for incrementing and decrementing memory
+    fn inc(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let (result, _) = value.overflowing_add(1);
+
+        self.mem_write_8(address, result);
+
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
+    }
+
+    fn dec(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let (result, _) = value.overflowing_sub(1);
+
+        self.mem_write_8(address, result);
+
+        self.cpu
+            .update_flag(&StatusFlag::Zero, self.cpu.register_y == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, self.cpu.register_y >> 7 == 1);
     }
 }
 
