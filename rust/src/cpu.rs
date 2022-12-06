@@ -174,7 +174,7 @@ impl Nes {
     fn sty(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
 
-        self.mem_write_8(address, self.cpu.register_x)
+        self.mem_write_8(address, self.cpu.register_y)
     }
 
     fn tax(&mut self, opcode: OpCode) {
@@ -286,6 +286,34 @@ impl Nes {
         let (result, _) = value.overflowing_sub(1);
 
         self.mem_write_8(address, result);
+        self.cpu.update_zero_and_negative_flags(result);
+    }
+
+    // Operations for byte comparison
+    fn cmp(&mut self, opcode: OpCode) { 
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let result = self.cpu.accumulator.wrapping_sub(value);
+
+        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.accumulator >= value);
+        self.cpu.update_zero_and_negative_flags(result);
+    } 
+
+    fn cpx(&mut self, opcode: OpCode) { 
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let result = self.cpu.register_x.wrapping_sub(value);
+
+        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.register_x >= value);
+        self.cpu.update_zero_and_negative_flags(result);
+    }
+
+    fn cpy(&mut self, opcode: OpCode) { 
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let result = self.cpu.register_y.wrapping_sub(value);
+
+        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.register_y >= value);
         self.cpu.update_zero_and_negative_flags(result);
     }
 }
