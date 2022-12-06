@@ -316,8 +316,18 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Carry, self.cpu.register_y >= value);
         self.cpu.update_zero_and_negative_flags(result);
     }
-}
 
+    // The BIT operation
+    fn bit(&mut self, opcode: OpCode) { 
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+        let result = self.cpu.accumulator & value;
+
+        self.cpu.update_flag(&StatusFlag::Overflow, value >> 6 == 1);
+        self.cpu.update_zero_and_negative_flags(result);
+    }
+}
+ 
 #[derive(Default)]
 pub struct Cpu {
     pub accumulator: u8,
