@@ -326,6 +326,14 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Overflow, value >> 6 == 1);
         self.cpu.update_zero_and_negative_flags(result);
     }
+
+    // The Jump operation
+    fn jmp(&mut self, opcode: OpCode) { 
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_16(address);
+
+        self.cpu.program_counter = value;
+    }
 }
  
 #[derive(Default)]
