@@ -238,7 +238,8 @@ impl Nes {
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator ^= value;
-        self.cpu.update_zero_and_negative_flags(self.cpu.accumulator);
+        self.cpu
+            .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
     // Operations for incrementing and decrementing the index registers
@@ -290,35 +291,38 @@ impl Nes {
     }
 
     // Operations for byte comparison
-    fn cmp(&mut self, opcode: OpCode) { 
+    fn cmp(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.accumulator.wrapping_sub(value);
 
-        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.accumulator >= value);
+        self.cpu
+            .update_flag(&StatusFlag::Carry, self.cpu.accumulator >= value);
         self.cpu.update_zero_and_negative_flags(result);
-    } 
+    }
 
-    fn cpx(&mut self, opcode: OpCode) { 
+    fn cpx(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.register_x.wrapping_sub(value);
 
-        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.register_x >= value);
+        self.cpu
+            .update_flag(&StatusFlag::Carry, self.cpu.register_x >= value);
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn cpy(&mut self, opcode: OpCode) { 
+    fn cpy(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.register_y.wrapping_sub(value);
 
-        self.cpu.update_flag(&StatusFlag::Carry, self.cpu.register_y >= value);
+        self.cpu
+            .update_flag(&StatusFlag::Carry, self.cpu.register_y >= value);
         self.cpu.update_zero_and_negative_flags(result);
     }
 
     // The BIT operation
-    fn bit(&mut self, opcode: OpCode) { 
+    fn bit(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.accumulator & value;
@@ -327,15 +331,77 @@ impl Nes {
         self.cpu.update_zero_and_negative_flags(result);
     }
 
+    // Bit shift operations
+    fn lsr(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let (result, _) = value.overflowing_shr(1);
+
+        self.mem_write_8(address, result);
+
+        self.cpu.update_flag(&StatusFlag::Zero, value >> 7 == 0);
+        self.cpu.update_flag(&StatusFlag::Negative, false);
+        self.cpu.update_flag(&StatusFlag::Carry, value & 1 == 1);
+    }
+
+    fn asl(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let (result, _) = value.overflowing_shl(1);
+
+        self.mem_write_8(address, result);
+
+        self.cpu.update_flag(&StatusFlag::Zero, value >> 7 == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, result >> 7 == 1);
+        self.cpu.update_flag(&StatusFlag::Carry, value >> 7 == 1);
+    }
+
+    fn ror(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let mut result = value.rotate_right(1);
+
+        self.cpu.update_flag(&StatusFlag::Carry, value >> 7 == 1);
+
+        if self.cpu.has_flag(&StatusFlag::Carry) {
+            result |= 0b10000000;
+        }
+
+        self.cpu.update_flag(&StatusFlag::Zero, value >> 7 == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, result >> 7 == 1);
+    }
+
+    fn rol(&mut self, opcode: OpCode) {
+        let address = self.get_operand_address(opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let mut result = value.rotate_left(1);
+
+        self.cpu.update_flag(&StatusFlag::Carry, value >> 7 == 1);
+
+        if self.cpu.has_flag(&StatusFlag::Carry) {
+            result |= 1;
+        }
+
+        self.cpu.update_flag(&StatusFlag::Zero, value >> 7 == 0);
+        self.cpu
+            .update_flag(&StatusFlag::Negative, result >> 7 == 1);
+    }
+
     // The Jump operation
-    fn jmp(&mut self, opcode: OpCode) { 
+    fn jmp(&mut self, opcode: OpCode) {
         let address = self.get_operand_address(opcode.address_mode);
         let value = self.mem_read_16(address);
 
         self.cpu.program_counter = value;
     }
 }
- 
+
 #[derive(Default)]
 pub struct Cpu {
     pub accumulator: u8,
