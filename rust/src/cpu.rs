@@ -402,7 +402,7 @@ impl Nes {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug)]
 pub struct Cpu {
     pub accumulator: u8,
     pub register_x: u8,
@@ -410,6 +410,19 @@ pub struct Cpu {
     pub program_counter: u16,
     pub status: u8,
     pub stack_pointer: u8,
+}
+
+impl Default for Cpu {
+    fn default() -> Self {
+        Self {
+            accumulator: 0,
+            register_x: 0,
+            register_y: 0,
+            program_counter: 0,
+            status: 0b00100100,
+            stack_pointer: 0xfd,
+        }
+    }
 }
 
 impl Cpu {
@@ -640,7 +653,7 @@ mod nes_test {
 
 #[cfg(test)]
 mod addressing_mode_tests {
-    use crate::cpu::Cpu;
+    use crate::{cpu::Cpu, instructions::OpCode};
 
     use super::{AddressingMode, Nes};
 

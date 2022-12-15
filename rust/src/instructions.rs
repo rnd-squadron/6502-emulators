@@ -78,7 +78,7 @@ impl OpCode {
     }
 
     #[rustfmt::skip]
-    fn from_byte(code: u8) -> OpCode {
+    pub fn from_byte(code: u8) -> OpCode {
         match(code) {
             // ADC - Add Memory to Accumulator with Carry
             0x69 => OpCode::new(code, Instruction::Adc, 2, 2, AddressingMode::Immediate),
