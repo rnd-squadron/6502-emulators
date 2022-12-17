@@ -47,6 +47,12 @@ impl Nes {
         self.memory = data;
     }
 
+    pub fn load_instructions(&mut self, program_mem: Vec<u8>) {
+        program_mem.iter().enumerate().for_each(|(index, &code)| {
+            self.mem_write_8(0x0600 + index as u16, code);
+        })
+    }
+
     pub fn load_rom_from_bytes(&mut self, data: &[u8]) {
         // TODO: fix overflow
         self.memory[0x8000..0x8000 + data.len()].copy_from_slice(data);
@@ -132,10 +138,13 @@ impl Nes {
 
                 u16::from_le_bytes([low, high]).wrapping_add(self.cpu.register_y as u16)
             }
+            _ => panic!("Addressing mode not implemented!"),
         }
     }
 
     pub fn run_with_reset_pc(&mut self, reset_program_counter: bool) {
+        self.reset();
+
         if reset_program_counter {
             self.cpu.program_counter = 0x0600;
         }
@@ -150,9 +159,14 @@ impl Nes {
 
             self.cpu.program_counter += 1;
 
+            let current_pc = self.cpu.program_counter;
             let opcode = OpCode::from_byte(code);
 
+            println!("Code: {:x?}", code);
+
             match code {
+                // Stop code
+                0x00 => return,
                 // ADC
                 0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
                     todo!("Implement ADC instruction")
@@ -201,7 +215,7 @@ impl Nes {
                 0x86 | 0x96 | 0x8E => self.stx(opcode),
                 // STY
                 0x84 | 0x94 | 0x8C => self.sty(opcode),
-                _ => todo!("Code: {} not implemented!", code),
+                _ => todo!("Code: {:x?} not implemented!", code),
             };
         }
     }
@@ -589,6 +603,7 @@ impl StatusFlag {
 /// - Relative: This mode is used with Branch-on-Condition instructions.
 /// - Indirect: This mode applies only to the JMP instruction - JuMP to new location.
 pub enum AddressingMode {
+    Implied,
     Accumulator,
     Immediate,
     ZeroPage,
@@ -889,5 +904,17 @@ mod addressing_mode_tests {
         let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndirectIndexedY));
 
         assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn lda_test() {
+        let mut nes = Nes::default();
+
+        nes.mem_write_8(0x10, 0x55);
+
+        nes.load_instructions(vec![0xA5, 0x10, 0x00]);
+        nes.run_with_reset_pc(true);
+
+        assert_eq!(nes.cpu.accumulator, 0x55);
     }
 }

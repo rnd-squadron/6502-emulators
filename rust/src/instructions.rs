@@ -5,6 +5,7 @@ use std::{collections::HashMap, iter::Cycle};
 use crate::cpu::{AddressingMode, Cpu, Nes, StatusFlag};
 
 pub enum Instruction {
+    Brk,
     // Common Load/Store opcodes
     Lda,
     Ldx,
@@ -80,6 +81,8 @@ impl OpCode {
     #[rustfmt::skip]
     pub fn from_byte(code: u8) -> OpCode {
         match(code) {
+            // BRK
+            0x00 => OpCode::new(code, Instruction::Brk, 1, 7, AddressingMode::Implied),
             // ADC - Add Memory to Accumulator with Carry
             0x69 => OpCode::new(code, Instruction::Adc, 2, 2, AddressingMode::Immediate),
             0x65 => OpCode::new(code, Instruction::Adc, 2, 3, AddressingMode::ZeroPage),
