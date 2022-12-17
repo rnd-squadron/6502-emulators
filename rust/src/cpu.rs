@@ -33,6 +33,7 @@ impl Nes {
         self.cpu.register_x = 0;
         self.cpu.register_y = 0;
         self.cpu.status = 0;
+        self.cpu.stack_pointer = 0xFD;
 
         // Reset vector: read from $FFFC and $FFFD
         self.cpu.program_counter = self.mem_read_16(0xFFFC);
@@ -131,6 +132,77 @@ impl Nes {
 
                 u16::from_le_bytes([low, high]).wrapping_add(self.cpu.register_y as u16)
             }
+        }
+    }
+
+    pub fn run_with_reset_pc(&mut self, reset_program_counter: bool) {
+        if reset_program_counter {
+            self.cpu.program_counter = 0x0600;
+        }
+
+        self.run()
+    }
+
+    fn run(&mut self) {
+        // Main loop
+        loop {
+            let code = self.mem_read_8(self.cpu.program_counter);
+
+            self.cpu.program_counter += 1;
+
+            let opcode = OpCode::from_byte(code);
+
+            match code {
+                // ADC
+                0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
+                    todo!("Implement ADC instruction")
+                }
+                // AND
+                0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(opcode),
+                // ASL
+                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(opcode),
+                // CMP
+                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(opcode),
+                // CPX
+                0xE0 | 0xE4 | 0xEC => self.cpx(opcode),
+                // CPY
+                0xC0 | 0xC4 | 0xCC => self.cpy(opcode),
+                // DEC
+                0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(opcode),
+                // EOR
+                0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(opcode),
+                // INC
+                0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(opcode),
+                // JMP
+                0x4C | 0x6C => self.jmp(opcode),
+                // JSR
+                0x20 => todo!("Implement JSR instruction"),
+                // LDA
+                0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(opcode),
+                // LDX
+                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(opcode),
+                // LDY
+                0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(opcode),
+                // LSR
+                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(opcode),
+                // ORA
+                0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(opcode),
+                // ROL
+                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(opcode),
+                // ROR
+                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(opcode),
+                // SBC
+                0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => {
+                    todo!("Implement SBC instruction")
+                }
+                // STA
+                0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode),
+                // STX
+                0x86 | 0x96 | 0x8E => self.stx(opcode),
+                // STY
+                0x84 | 0x94 | 0x8C => self.sty(opcode),
+                _ => todo!("Code: {} not implemented!", code),
+            };
         }
     }
 
@@ -418,7 +490,7 @@ impl Default for Cpu {
             accumulator: 0,
             register_x: 0,
             register_y: 0,
-            program_counter: 0,
+            program_counter: 0x0600,
             status: 0b00100100,
             stack_pointer: 0xfd,
         }
