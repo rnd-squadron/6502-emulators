@@ -1,7 +1,7 @@
 // TODO: Remove this lint rules
 #![allow(unused)]
 
-use std::{cmp, fs, io::Read, slice};
+use std::{cmp, fs, io::Read, ops::Deref, slice};
 use strum_macros::EnumIter;
 
 use crate::instructions::OpCode;
@@ -92,7 +92,7 @@ impl Nes {
         self.mem_write_8(address.wrapping_add(1), high);
     }
 
-    pub fn get_operand_address(&self, mode: AddressingMode) -> u16 {
+    pub fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
         let program_counter = self.cpu.program_counter;
 
         match mode {
@@ -172,137 +172,145 @@ impl Nes {
                     todo!("Implement ADC instruction")
                 }
                 // AND
-                0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(opcode),
+                0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => self.and(&opcode),
                 // ASL
-                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(opcode),
+                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => self.asl(&opcode),
                 // CMP
-                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(opcode),
+                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp(&opcode),
                 // CPX
-                0xE0 | 0xE4 | 0xEC => self.cpx(opcode),
+                0xE0 | 0xE4 | 0xEC => self.cpx(&opcode),
                 // CPY
-                0xC0 | 0xC4 | 0xCC => self.cpy(opcode),
+                0xC0 | 0xC4 | 0xCC => self.cpy(&opcode),
                 // DEC
-                0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(opcode),
+                0xC6 | 0xD6 | 0xCE | 0xDE => self.dec(&opcode),
                 // EOR
-                0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(opcode),
+                0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => self.eor(&opcode),
                 // INC
-                0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(opcode),
+                0xE6 | 0xF6 | 0xEE | 0xFE => self.inc(&opcode),
                 // JMP
-                0x4C | 0x6C => self.jmp(opcode),
+                0x4C | 0x6C => self.jmp(&opcode),
                 // JSR
                 0x20 => todo!("Implement JSR instruction"),
                 // LDA
-                0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(opcode),
+                0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => self.lda(&opcode),
                 // LDX
-                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(opcode),
+                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => self.ldx(&opcode),
                 // LDY
-                0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(opcode),
+                0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => self.ldy(&opcode),
                 // LSR
-                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(opcode),
+                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => self.lsr(&opcode),
                 // ORA
-                0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(opcode),
+                0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&opcode),
                 // ROL
-                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(opcode),
+                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => self.rol(&opcode),
                 // ROR
-                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(opcode),
+                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => self.ror(&opcode),
                 // SBC
                 0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => {
                     todo!("Implement SBC instruction")
                 }
                 // STA
-                0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(opcode),
+                0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => self.sta(&opcode),
                 // STX
-                0x86 | 0x96 | 0x8E => self.stx(opcode),
+                0x86 | 0x96 | 0x8E => self.stx(&opcode),
                 // STY
-                0x84 | 0x94 | 0x8C => self.sty(opcode),
+                0x84 | 0x94 | 0x8C => self.sty(&opcode),
                 _ => todo!("Code: {:x?} not implemented!", code),
             };
+
+            self.update_pc(current_pc, opcode.bytes);
+        }
+    }
+
+    fn update_pc(&mut self, current_pc: u16, bytes: u8) {
+        if current_pc == self.cpu.program_counter {
+            self.cpu.program_counter += (bytes - 1) as u16;
         }
     }
 
     //Operations for transferring bytes of data
-    fn lda(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn lda(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator = value;
         self.cpu.update_zero_and_negative_flags(value);
     }
 
-    fn ldx(&mut self, opcode: OpCode) {
-        let adderss = self.get_operand_address(opcode.address_mode);
+    fn ldx(&mut self, opcode: &OpCode) {
+        let adderss = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(adderss);
 
         self.cpu.register_x = value;
         self.cpu.update_zero_and_negative_flags(value);
     }
 
-    fn ldy(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn ldy(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.register_y = value;
         self.cpu.update_zero_and_negative_flags(value);
     }
 
-    fn sta(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn sta(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
 
         self.mem_write_8(address, self.cpu.accumulator);
     }
 
-    fn stx(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn stx(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
 
         self.mem_write_8(address, self.cpu.register_x)
     }
 
-    fn sty(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn sty(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
 
         self.mem_write_8(address, self.cpu.register_y)
     }
 
-    fn tax(&mut self, opcode: OpCode) {
+    fn tax(&mut self, opcode: &OpCode) {
         self.cpu.register_x = self.cpu.accumulator;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
-    fn tay(&mut self, opcode: OpCode) {
+    fn tay(&mut self, opcode: &OpCode) {
         self.cpu.register_y = self.cpu.accumulator;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_y);
     }
 
-    fn txa(&mut self, opcode: OpCode) {
+    fn txa(&mut self, opcode: &OpCode) {
         self.cpu.accumulator = self.cpu.register_x;
         self.cpu
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn tya(&mut self, opcode: OpCode) {
+    fn tya(&mut self, opcode: &OpCode) {
         self.cpu.accumulator = self.cpu.register_y;
         self.cpu
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn txs(&mut self, opcode: OpCode) {
+    fn txs(&mut self, opcode: &OpCode) {
         self.cpu.stack_pointer = self.cpu.register_x;
     }
 
-    fn tsx(&mut self, opcode: OpCode) {
+    fn tsx(&mut self, opcode: &OpCode) {
         self.cpu.register_x = self.cpu.stack_pointer;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
     // Addition
-    fn adc(&mut self, opcode: OpCode) {}
+    fn adc(&mut self, opcode: &OpCode) {}
 
     // Subtraction
-    fn sub(&mut self, opcode: OpCode) {}
+    fn sub(&mut self, opcode: &OpCode) {}
 
     // Bitwise operations
-    fn and(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn and(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator &= value;
@@ -310,8 +318,8 @@ impl Nes {
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn ora(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn ora(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator |= value;
@@ -319,8 +327,8 @@ impl Nes {
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn eor(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn eor(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         self.cpu.accumulator ^= value;
@@ -329,28 +337,28 @@ impl Nes {
     }
 
     // Operations for incrementing and decrementing the index registers
-    fn inx(&mut self, opcode: OpCode) {
+    fn inx(&mut self, opcode: &OpCode) {
         let (result, _) = self.cpu.register_x.overflowing_add(1);
 
         self.cpu.register_x = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn iny(&mut self, opcode: OpCode) {
+    fn iny(&mut self, opcode: &OpCode) {
         let (result, _) = self.cpu.register_y.overflowing_add(1);
 
         self.cpu.register_y = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn dex(&mut self, opcode: OpCode) {
+    fn dex(&mut self, opcode: &OpCode) {
         let (result, _) = self.cpu.register_x.overflowing_sub(1);
 
         self.cpu.register_x = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn dey(&mut self, opcode: OpCode) {
+    fn dey(&mut self, opcode: &OpCode) {
         let (result, _) = self.cpu.register_y.overflowing_sub(1);
 
         self.cpu.register_y = result;
@@ -358,8 +366,8 @@ impl Nes {
     }
 
     // Operations for incrementing and decrementing memory
-    fn inc(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn inc(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let (result, _) = value.overflowing_add(1);
 
@@ -367,8 +375,8 @@ impl Nes {
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn dec(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn dec(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let (result, _) = value.overflowing_sub(1);
 
@@ -377,8 +385,8 @@ impl Nes {
     }
 
     // Operations for byte comparison
-    fn cmp(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn cmp(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.accumulator.wrapping_sub(value);
 
@@ -387,8 +395,8 @@ impl Nes {
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn cpx(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn cpx(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.register_x.wrapping_sub(value);
 
@@ -397,8 +405,8 @@ impl Nes {
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn cpy(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn cpy(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.register_y.wrapping_sub(value);
 
@@ -408,8 +416,8 @@ impl Nes {
     }
 
     // The BIT operation
-    fn bit(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn bit(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
         let result = self.cpu.accumulator & value;
 
@@ -418,8 +426,8 @@ impl Nes {
     }
 
     // Bit shift operations
-    fn lsr(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn lsr(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         let (result, _) = value.overflowing_shr(1);
@@ -431,8 +439,8 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Carry, value & 1 == 1);
     }
 
-    fn asl(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn asl(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         let (result, _) = value.overflowing_shl(1);
@@ -445,8 +453,8 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Carry, value >> 7 == 1);
     }
 
-    fn ror(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn ror(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         let mut result = value.rotate_right(1);
@@ -462,8 +470,8 @@ impl Nes {
             .update_flag(&StatusFlag::Negative, result >> 7 == 1);
     }
 
-    fn rol(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn rol(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
 
         let mut result = value.rotate_left(1);
@@ -480,8 +488,8 @@ impl Nes {
     }
 
     // The Jump operation
-    fn jmp(&mut self, opcode: OpCode) {
-        let address = self.get_operand_address(opcode.address_mode);
+    fn jmp(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_16(address);
 
         self.cpu.program_counter = value;
@@ -757,7 +765,7 @@ mod addressing_mode_tests {
         nes.set_program_counter(program_counter);
 
         assert_eq!(
-            nes.get_operand_address(AddressingMode::Immediate),
+            nes.get_operand_address(&AddressingMode::Immediate),
             program_counter
         );
     }
@@ -772,7 +780,7 @@ mod addressing_mode_tests {
         nes.mem_write_8(program_counter, expected_result);
 
         assert_eq!(
-            nes.get_operand_address(AddressingMode::Absolute),
+            nes.get_operand_address(&AddressingMode::Absolute),
             expected_result as u16
         );
     }
@@ -788,7 +796,7 @@ mod addressing_mode_tests {
         nes.mem_write_8(program_counter, rom_data);
         nes.mem_write_8(rom_data as u16, expected_result);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPage));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::ZeroPage));
 
         assert_eq!(result, expected_result);
     }
@@ -804,7 +812,7 @@ mod addressing_mode_tests {
         nes.mem_write_8(nes.cpu.program_counter, rom_data);
         nes.mem_write_8(rom_data.wrapping_add(register_x) as u16, expected_result);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPageX));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::ZeroPageX));
 
         assert_eq!(result, expected_result);
     }
@@ -820,7 +828,7 @@ mod addressing_mode_tests {
         nes.mem_write_8(nes.cpu.program_counter, rom_data);
         nes.mem_write_8(rom_data.wrapping_add(register_y) as u16, expected_result);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::ZeroPageY));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::ZeroPageY));
 
         assert_eq!(result, expected_result);
     }
@@ -836,7 +844,7 @@ mod addressing_mode_tests {
         nes.mem_write_16(nes.cpu.program_counter, rom_data);
         nes.mem_write_8(rom_data.wrapping_add(register_x as u16), expected_result);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::AbsoluteX));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::AbsoluteX));
 
         assert_eq!(result, expected_result);
     }
@@ -852,7 +860,7 @@ mod addressing_mode_tests {
         nes.mem_write_16(nes.cpu.program_counter, rom_data);
         nes.mem_write_8(rom_data.wrapping_add(register_y as u16), expected_resukt);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::AbsoluteY));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::AbsoluteY));
 
         assert_eq!(result, expected_resukt);
     }
@@ -879,7 +887,7 @@ mod addressing_mode_tests {
         );
         nes.mem_write_8(stored_address, expected_result);
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndexedIndirectX));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::IndexedIndirectX));
 
         assert_eq!(result, expected_result);
     }
@@ -901,20 +909,8 @@ mod addressing_mode_tests {
             expected_result,
         );
 
-        let result = nes.mem_read_8(nes.get_operand_address(AddressingMode::IndirectIndexedY));
+        let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::IndirectIndexedY));
 
         assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn lda_test() {
-        let mut nes = Nes::default();
-
-        nes.mem_write_8(0x10, 0x55);
-
-        nes.load_instructions(vec![0xA5, 0x10, 0x00]);
-        nes.run_with_reset_pc(true);
-
-        assert_eq!(nes.cpu.accumulator, 0x55);
     }
 }
