@@ -162,8 +162,6 @@ impl Nes {
             let current_pc = self.cpu.program_counter;
             let opcode = OpCode::from_byte(code);
 
-            println!("Code: {:x?}", code);
-
             match code {
                 // Stop code
                 0x00 => return,
@@ -635,6 +633,8 @@ mod nes_test {
     fn cpu_status_test() {
         for case in StatusFlag::iter() {
             let mut cpu = Cpu::default();
+            cpu.status = 0b00000000;
+
             // All flags are off by default
             assert!(!cpu.has_flag(&case));
 
@@ -910,7 +910,31 @@ mod addressing_mode_tests {
         );
 
         let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::IndirectIndexedY));
-
+        
         assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn lda_immediate_test() { 
+        let mut nes = Nes::default();
+        
+        nes.mem_write_8(nes.cpu.program_counter + 1, 0x80);
+
+        nes.load_instructions(vec![0xA9]);
+        nes.run_with_reset_pc(true);
+
+        assert_eq!(nes.cpu.accumulator, 0x80);
+    }
+
+    #[test]
+    fn lda_zero_page_test() { 
+        let mut nes = Nes::default();
+        
+        nes.mem_write_8(0x48, 0x80);
+
+        nes.load_instructions(vec![0xA5, 0x48]);
+        nes.run_with_reset_pc(true);
+
+        assert_eq!(nes.cpu.accumulator, 0x80);
     }
 }
