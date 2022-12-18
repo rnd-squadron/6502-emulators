@@ -27,7 +27,6 @@ pub enum Instruction {
     Adc,
     And,
     Sbc,
-    Sec,
     Inc,
     Dec,
     Iny,
@@ -51,6 +50,15 @@ pub enum Instruction {
     Jsr,
     Beq,
     Bne,
+
+    // Operations for setting and clearing the Processor Status register flags
+    Sec,
+    Clc,
+    Clv,
+    Sei,
+    Cli,
+    Sed,
+    Cld,
 }
 
 pub struct OpCode {
@@ -221,6 +229,21 @@ impl OpCode {
             0x84 => OpCode::new(code, Instruction::Sty, 2, 3, AddressingMode::ZeroPage),
             0x94 => OpCode::new(code, Instruction::Sty, 2, 4, AddressingMode::ZeroPageX),
             0x8C => OpCode::new(code, Instruction::Sty, 3, 4, AddressingMode::Absolute),
+            // SEC (set carry flag)
+            0x38 => OpCode::new(code, Instruction::Sec, 1, 2, AddressingMode::Implied),
+            // CLC (clear carry flag)
+            0x18 => OpCode::new(code, Instruction::Clc, 1, 2, AddressingMode::Implied),
+            // CLV (clear overflow flag)
+            0xB8 => OpCode::new(code, Instruction::Clv, 1, 2, AddressingMode::Implied),
+            // SEI (set interrupt disable flag)
+            0x78 => OpCode::new(code, Instruction::Sei, 1, 2, AddressingMode::Implied),
+            // CLI (clear interrupt disable flag)
+            0x58 => OpCode::new(code, Instruction::Cli, 1, 2, AddressingMode::Implied),
+            // SED (set decimal mode)
+            0xF8 => OpCode::new(code, Instruction::Sed, 1, 2, AddressingMode::Implied),
+            // CLD (clear decimal mode)
+            0xD8 => OpCode::new(code, Instruction::Cld, 1, 2, AddressingMode::Implied),
+
             _ => panic!("Opcode not found! Opcode: {:x}", code)
         }
     }

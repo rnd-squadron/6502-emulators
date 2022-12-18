@@ -4,7 +4,7 @@
 use std::{cmp, fs, io::Read, ops::Deref, slice};
 use strum_macros::EnumIter;
 
-use crate::instructions::{OpCode, Instruction};
+use crate::instructions::{Instruction, OpCode};
 
 pub struct Nes {
     pub cpu: Cpu,
@@ -209,6 +209,20 @@ impl Nes {
                 (Instruction::Stx, _) => self.stx(&opcode),
                 // STY
                 (Instruction::Sty, _) => self.sty(&opcode),
+                // SEC
+                (Instruction::Sec, _) => self.sec(),
+                // SED
+                (Instruction::Sed, _) => self.sed(),
+                // SEI
+                (Instruction::Sei, _) => self.sei(),
+                // CLC
+                (Instruction::Clc, _) => self.clc(),
+                // CLD
+                (Instruction::Cld, _) => self.cld(),
+                // CLI
+                (Instruction::Cli, _) => self.cli(),
+                // CLV
+                (Instruction::Clv, _) => self.clv(),
                 // Other
                 _ => todo!("Code: {:x?} not implemented!", code),
             };
@@ -488,6 +502,35 @@ impl Nes {
         let value = self.mem_read_16(address);
 
         self.cpu.program_counter = value;
+    }
+
+    // Operations for setting and clearing the Processor Status register flags
+    fn sec(&mut self) {
+        self.cpu.enable_flag(&StatusFlag::Carry);
+    }
+
+    fn sed(&mut self) {
+        self.cpu.enable_flag(&StatusFlag::Decimal);
+    }
+
+    fn sei(&mut self) {
+        self.cpu.enable_flag(&StatusFlag::Interrupt);
+    }
+
+    fn clc(&mut self) {
+        self.cpu.disable_flag(&StatusFlag::Carry);
+    }
+
+    fn cld(&mut self) {
+        self.cpu.disable_flag(&StatusFlag::Decimal);
+    }
+
+    fn cli(&mut self) {
+        self.cpu.disable_flag(&StatusFlag::Interrupt);
+    }
+
+    fn clv(&mut self) {
+        self.cpu.disable_flag(&StatusFlag::Overflow);
     }
 }
 
@@ -907,14 +950,14 @@ mod addressing_mode_tests {
         );
 
         let result = nes.mem_read_8(nes.get_operand_address(&AddressingMode::IndirectIndexedY));
-        
+
         assert_eq!(result, expected_result);
     }
 
     #[test]
-    fn lda_immediate_test() { 
+    fn lda_immediate_test() {
         let mut nes = Nes::default();
-        
+
         nes.mem_write_8(nes.cpu.program_counter + 1, 0x80);
 
         nes.load_instructions(vec![0xA9]);
@@ -924,7 +967,7 @@ mod addressing_mode_tests {
     }
 
     #[test]
-    fn load_to_and_store_to_zero_page_test() { 
+    fn load_to_and_store_to_zero_page_test() {
         let mut nes = Nes::default();
 
         // 0080: F1, F2, F3, 00,  00
