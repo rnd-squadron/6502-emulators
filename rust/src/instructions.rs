@@ -48,6 +48,12 @@ pub enum Instruction {
     // Common Control Flow opcodes
     Jmp,
     Jsr,
+    Bmi,
+    Bpl,
+    Bvs,
+    Bvc,
+    Bcs,
+    Bcc,
     Beq,
     Bne,
 

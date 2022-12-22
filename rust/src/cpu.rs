@@ -223,6 +223,22 @@ impl Nes {
                 (Instruction::Cli, _) => self.cli(),
                 // CLV
                 (Instruction::Clv, _) => self.clv(),
+                // BMI
+                (Instruction::Bmi, _) => self.bmi(&opcode),
+                // BPL
+                (Instruction::Bpl, _) => self.bpl(&opcode),
+                // BVS
+                (Instruction::Bvs, _) => self.bvs(&opcode),
+                // BVC
+                (Instruction::Bvc, _) => self.bvc(&opcode),
+                // BCS
+                (Instruction::Bcs, _) => self.bcs(&opcode),
+                // BCC
+                (Instruction::Bcc, _) => self.bcc(&opcode),
+                // BEQ
+                (Instruction::Beq, _) => self.beq(&opcode),
+                // BNE
+                (Instruction::Bne, _) => self.bne(&opcode),
                 // Other
                 _ => todo!("Code: {:x?} not implemented!", code),
             };
@@ -531,6 +547,54 @@ impl Nes {
 
     fn clv(&mut self) {
         self.cpu.disable_flag(&StatusFlag::Overflow);
+    }
+
+    fn bmi(&mut self, opcode: &OpCode) {
+        if self.cpu.has_flag(&StatusFlag::Negative) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bpl(&mut self, opcode: &OpCode) {
+        if !self.cpu.has_flag(&StatusFlag::Negative) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bvs(&mut self, opcode: &OpCode) {
+        if self.cpu.has_flag(&StatusFlag::Overflow) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bvc(&mut self, opcode: &OpCode) {
+        if !self.cpu.has_flag(&StatusFlag::Overflow) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bcs(&mut self, opcode: &OpCode) {
+        if self.cpu.has_flag(&StatusFlag::Carry) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bcc(&mut self, opcode: &OpCode) {
+        if !self.cpu.has_flag(&StatusFlag::Carry) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn beq(&mut self, opcode: &OpCode) {
+        if self.cpu.has_flag(&StatusFlag::Zero) {
+            self.jmp(opcode)
+        }
+    }
+
+    fn bne(&mut self, opcode: &OpCode) {
+        if !self.cpu.has_flag(&StatusFlag::Zero) {
+            self.jmp(opcode)
+        }
     }
 }
 
