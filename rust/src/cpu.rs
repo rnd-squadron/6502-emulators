@@ -104,6 +104,20 @@ impl Nes {
         self.cpu.stack_pointer = self.cpu.stack_pointer.wrapping_sub(1);
     }
 
+    pub fn pop_stack_16(&mut self) -> u16 { 
+        let low = self.pop_stack() as u16;
+        let high = self.pop_stack() as u16;
+
+        (high << 8) | low
+    }
+
+    pub fn push_stack_16(&mut self, data: u16) { 
+        let [high, low] = [(data >> 8) as u8, (data & 0xFF) as u8];
+
+        self.push_stack(high);
+        self.push_stack(low);
+    }
+
     pub fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
         let program_counter = self.cpu.program_counter;
 
