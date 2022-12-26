@@ -6,6 +6,8 @@ use strum_macros::EnumIter;
 
 use crate::instructions::{Instruction, OpCode};
 
+const STACK_START: u16 = 0x0100;
+
 pub struct Nes {
     pub cpu: Cpu,
     pub memory: [u8; 0xFFFF], // 64 Kib
@@ -90,6 +92,16 @@ impl Nes {
 
         self.mem_write_8(address, low);
         self.mem_write_8(address.wrapping_add(1), high);
+    }
+
+    pub fn pop_stack(&mut self) -> u8 {
+        self.cpu.stack_pointer = self.cpu.stack_pointer.wrapping_add(1);
+        self.mem_read_8(STACK_START + self.cpu.stack_pointer as u16)
+    }
+
+    pub fn push_stack(&mut self, data: u8) {
+        self.mem_write_8(STACK_START + self.cpu.stack_pointer as u16, data);
+        self.cpu.stack_pointer = self.cpu.stack_pointer.wrapping_sub(1);
     }
 
     pub fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
@@ -596,6 +608,8 @@ impl Nes {
             self.jmp(opcode)
         }
     }
+
+    //
 }
 
 #[derive(Debug)]
