@@ -104,14 +104,14 @@ impl Nes {
         self.cpu.stack_pointer = self.cpu.stack_pointer.wrapping_sub(1);
     }
 
-    pub fn pop_stack_16(&mut self) -> u16 { 
+    pub fn pop_stack_16(&mut self) -> u16 {
         let low = self.pop_stack() as u16;
         let high = self.pop_stack() as u16;
 
         (high << 8) | low
     }
 
-    pub fn push_stack_16(&mut self, data: u16) { 
+    pub fn push_stack_16(&mut self, data: u16) {
         let [high, low] = [(data >> 8) as u8, (data & 0xFF) as u8];
 
         self.push_stack(high);
@@ -354,7 +354,29 @@ impl Nes {
     }
 
     // Addition
-    fn adc(&mut self, opcode: &OpCode) {}
+    fn adc(&mut self, opcode: &OpCode) {
+        let has_carry_flag = if self.cpu.has_flag(&StatusFlag::Carry) {
+            1
+        } else {
+            0
+        };
+
+        let address = self.get_operand_address(&opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let result_with_carry =
+            (value as u16) + (self.cpu.accumulator as u16) + (has_carry_flag as u16);
+        let result = result_with_carry as u8;
+
+        let has_carry = result_with_carry > 0xFF;
+        let has_overflow = (value ^ result) & (self.cpu.accumulator ^ result) & 0x80 != 0;
+
+        self.cpu.accumulator = result;
+
+        self.cpu.update_flag(&StatusFlag::Carry, has_carry);
+        self.cpu.update_flag(&StatusFlag::Overflow, has_overflow);
+        self.cpu.update_zero_and_negative_flags(result);
+    }
 
     // Subtraction
     fn sub(&mut self, opcode: &OpCode) {}
