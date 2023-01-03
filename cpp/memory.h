@@ -29,12 +29,10 @@ void RAM<Size>::store(std::size_t addr, std::uint16_t v) {
   
   // Assuming that the value is big-endian.
   // Firstly extract low byte of the value.
-  std::uint8_t b = v;
-  mem[addr] = b;
+  mem[addr] = v;
   
   // Then high byte of the value.
-  b = v >> 8;
-  mem[addr + 1] = b;
+  mem[addr + 1] = v >> 8;
 }
 
 template<std::size_t Size>
@@ -48,8 +46,7 @@ std::uint16_t RAM<Size>::load16(std::size_t addr) {
   check_for_bounds(addr + 1);
 
   // Assuming that the returned value is big-endian.
-  std::uint16_t tmp = mem[addr + 1];
-  return (tmp << 8) | mem[addr];
+  return static_cast<uint16_t>(mem[addr + 1]) << 8 | mem[addr];
 }
 
 template<std::size_t Size>
