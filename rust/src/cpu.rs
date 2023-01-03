@@ -373,6 +373,7 @@ impl Nes {
         self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
+    // TODO: Refactor adc & sbc methods (same structure)
     // Addition
     fn adc(&mut self, opcode: &OpCode) {
         let has_carry_flag = self.cpu.has_flag(&StatusFlag::Carry) as u8;
@@ -416,9 +417,6 @@ impl Nes {
         self.cpu.update_flag(&StatusFlag::Overflow, has_overflow);
         self.cpu.update_zero_and_negative_flags(result);
     }
-
-    // Subtraction
-    fn sub(&mut self, opcode: &OpCode) {}
 
     // Bitwise operations
     fn and(&mut self, opcode: &OpCode) {
@@ -684,7 +682,36 @@ impl Nes {
         }
     }
 
-    //
+    fn jsr(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
+        let value = self.mem_read_16(address);
+
+        self.cpu.program_counter = value;
+
+        self.push_stack_16(self.cpu.program_counter);
+    }
+
+    fn rts(&mut self) {
+        self.cpu.program_counter = self.pop_stack_16();
+    }
+
+    fn pha(&mut self) {
+        self.push_stack(self.cpu.accumulator);
+    }
+
+    fn php(&mut self) {
+        self.push_stack(self.cpu.stack_pointer);
+    }
+
+    fn pla(&mut self) {
+        self.cpu.accumulator = self.pop_stack();
+        self.cpu
+            .update_zero_and_negative_flags(self.cpu.accumulator);
+    }
+
+    fn plp(&mut self) {
+        self.cpu.stack_pointer = self.pop_stack();
+    }
 }
 
 impl NesMemory for Nes {
