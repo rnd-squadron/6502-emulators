@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdexcept>
 
-template<std::size_t L>
+template<std::size_t Size>
 class RAM {
 public:
   void store(std::size_t, std::uint8_t);
@@ -14,17 +14,17 @@ public:
 private:
   void check_for_bounds(std::size_t addr);
   
-  std::array<std::uint8_t, L> mem;
+  std::array<std::uint8_t, Size> mem;
 };
 
-template<std::size_t L>
-void RAM<L>::store(std::size_t addr, std::uint8_t v) {
+template<std::size_t Size>
+void RAM<Size>::store(std::size_t addr, std::uint8_t v) {
   check_for_bounds(addr);
   mem[addr] = v;
 }
 
-template<std::size_t L>
-void RAM<L>::store(std::size_t addr, std::uint16_t v) {
+template<std::size_t Size>
+void RAM<Size>::store(std::size_t addr, std::uint16_t v) {
   check_for_bounds(addr + 1);
   
   // Assuming that the value is big-endian.
@@ -37,14 +37,14 @@ void RAM<L>::store(std::size_t addr, std::uint16_t v) {
   mem[addr + 1] = b;
 }
 
-template<std::size_t L>
-std::uint8_t RAM<L>::load8(std::size_t addr) {
+template<std::size_t Size>
+std::uint8_t RAM<Size>::load8(std::size_t addr) {
   check_for_bounds(addr);
   return mem[addr];
 }
 
-template<std::size_t L>
-std::uint16_t RAM<L>::load16(std::size_t addr) {
+template<std::size_t Size>
+std::uint16_t RAM<Size>::load16(std::size_t addr) {
   check_for_bounds(addr + 1);
 
   // Assuming that the returned value is big-endian.
@@ -52,8 +52,8 @@ std::uint16_t RAM<L>::load16(std::size_t addr) {
   return (tmp << 8) | mem[addr];
 }
 
-template<std::size_t L>
-void RAM<L>::check_for_bounds(std::size_t addr) {
+template<std::size_t Size>
+void RAM<Size>::check_for_bounds(std::size_t addr) {
   if (addr >= mem.size()) {
     throw std::out_of_range("address out of memory");
   }
