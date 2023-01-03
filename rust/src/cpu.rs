@@ -22,6 +22,27 @@ impl Default for Nes {
     }
 }
 
+pub trait NesMemory {
+    fn mem_read_8(&self, address: u16) -> u8;
+
+    fn mem_write_8(&mut self, address: u16, data: u8);
+
+    // Default methods
+    fn mem_read_16(&self, address: u16) -> u16 {
+        let low = self.mem_read_8(address) as u16;
+        let high = self.mem_read_8(address.wrapping_add(1)) as u16;
+
+        (high << 8) | low
+    }
+
+    fn mem_write_16(&mut self, address: u16, data: u16) {
+        let [high, low] = [(data >> 8) as u8, (data & 0xFF) as u8];
+
+        self.mem_write_8(address, low);
+        self.mem_write_8(address.wrapping_add(1), high);
+    }
+}
+
 impl Nes {
     pub fn new(cpu: Cpu) -> Self {
         Nes {
@@ -192,7 +213,7 @@ impl Nes {
                 // Stop code
                 (Instruction::Brk, _) => return,
                 // ADC
-                (Instruction::Adc, _) => todo!("Implement ADC instruction"),
+                (Instruction::Adc, _) => self.adc(&opcode),
                 // AND
                 (Instruction::And, _) => self.and(&opcode),
                 // ASL
@@ -646,6 +667,16 @@ impl Nes {
     }
 
     //
+}
+
+impl NesMemory for Nes {
+    fn mem_read_8(&self, address: u16) -> u8 {
+        self.memory[address as usize]
+    }
+
+    fn mem_write_8(&mut self, address: u16, data: u8) {
+        self.memory[address as usize] = data;
+    }
 }
 
 #[derive(Debug)]
