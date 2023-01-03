@@ -27,7 +27,6 @@ pub trait NesMemory {
 
     fn mem_write_8(&mut self, address: u16, data: u8);
 
-    // Default methods
     fn mem_read_16(&self, address: u16) -> u16 {
         let low = self.mem_read_8(address) as u16;
         let high = self.mem_read_8(address.wrapping_add(1)) as u16;
@@ -376,11 +375,7 @@ impl Nes {
 
     // Addition
     fn adc(&mut self, opcode: &OpCode) {
-        let has_carry_flag = if self.cpu.has_flag(&StatusFlag::Carry) {
-            1
-        } else {
-            0
-        };
+        let has_carry_flag = self.cpu.has_flag(&StatusFlag::Carry) as u8;
 
         let address = self.get_operand_address(&opcode.address_mode);
         let value = self.mem_read_8(address);
@@ -391,6 +386,29 @@ impl Nes {
 
         let has_carry = result_with_carry > 0xFF;
         let has_overflow = (value ^ result) & (self.cpu.accumulator ^ result) & 0x80 != 0;
+
+        self.cpu.accumulator = result;
+
+        self.cpu.update_flag(&StatusFlag::Carry, has_carry);
+        self.cpu.update_flag(&StatusFlag::Overflow, has_overflow);
+        self.cpu.update_zero_and_negative_flags(result);
+    }
+
+    // Substract
+    fn sbc(&mut self, opcode: &OpCode) {
+        let address = self.get_operand_address(&opcode.address_mode);
+        let value = self.mem_read_8(address);
+
+        let sub_result = (value as i8).wrapping_neg().wrapping_sub(1) as u8;
+
+        let has_carry_flag = self.cpu.has_flag(&StatusFlag::Carry) as u8;
+
+        let result_with_carry =
+            (sub_result as u16) + (self.cpu.accumulator as u16) + (has_carry_flag as u16);
+        let result = result_with_carry as u8;
+
+        let has_carry = result_with_carry > 0xFF;
+        let has_overflow = (sub_result ^ result) & (self.cpu.accumulator ^ result) & 0x80 != 0;
 
         self.cpu.accumulator = result;
 
