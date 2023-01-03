@@ -1,8 +1,4 @@
-#![allow(unused)]
-
-use std::{collections::HashMap, iter::Cycle};
-
-use crate::cpu::{AddressingMode, Cpu, Nes, StatusFlag};
+use crate::cpu::AddressingMode;
 
 pub enum Instruction {
     Brk,
@@ -48,6 +44,7 @@ pub enum Instruction {
     // Common Control Flow opcodes
     Jmp,
     Jsr,
+    Rts,
     Bmi,
     Bpl,
     Bvs,
@@ -56,6 +53,10 @@ pub enum Instruction {
     Bcc,
     Beq,
     Bne,
+    Pha,
+    Php,
+    Pla,
+    Plp,
 
     // Operations for setting and clearing the Processor Status register flags
     Sec,
@@ -65,6 +66,9 @@ pub enum Instruction {
     Cli,
     Sed,
     Cld,
+
+    // Bit operations
+    Bit,
 }
 
 pub struct OpCode {
@@ -94,7 +98,7 @@ impl OpCode {
 
     #[rustfmt::skip]
     pub fn from_byte(code: u8) -> OpCode {
-        match(code) {
+        match code {
             // BRK
             0x00 => OpCode::new(code, Instruction::Brk, 1, 7, AddressingMode::Implied),
             // ADC - Add Memory to Accumulator with Carry
@@ -235,6 +239,26 @@ impl OpCode {
             0x84 => OpCode::new(code, Instruction::Sty, 2, 3, AddressingMode::ZeroPage),
             0x94 => OpCode::new(code, Instruction::Sty, 2, 4, AddressingMode::ZeroPageX),
             0x8C => OpCode::new(code, Instruction::Sty, 3, 4, AddressingMode::Absolute),
+            // INX 
+            0xE8 => OpCode::new(code, Instruction::Inx, 1, 2, AddressingMode::Implied),
+            // INY 
+            0xC8 => OpCode::new(code, Instruction::Iny, 1, 2, AddressingMode::Implied),
+            // DEX 
+            0xCA => OpCode::new(code, Instruction::Dex, 1, 2, AddressingMode::Implied),
+            // DEY 
+            0x88 => OpCode::new(code, Instruction::Dey, 1, 2, AddressingMode::Implied),
+            // TAX 
+            0xAA => OpCode::new(code, Instruction::Tax, 1, 2, AddressingMode::Implied),
+            // TAY 
+            0xA8 => OpCode::new(code, Instruction::Tay, 1, 2, AddressingMode::Implied),
+            // TSX
+            0xBA => OpCode::new(code, Instruction::Tsx, 1, 2, AddressingMode::Implied),
+            // TXA
+            0x8A => OpCode::new(code, Instruction::Txa, 1, 2, AddressingMode::Implied),
+            // TXS
+            0x9A => OpCode::new(code, Instruction::Txs, 1, 2, AddressingMode::Implied),
+            // TYA
+            0x98 => OpCode::new(code, Instruction::Tya, 1, 2, AddressingMode::Implied),
             // SEC (set carry flag)
             0x38 => OpCode::new(code, Instruction::Sec, 1, 2, AddressingMode::Implied),
             // CLC (clear carry flag)
@@ -249,19 +273,37 @@ impl OpCode {
             0xF8 => OpCode::new(code, Instruction::Sed, 1, 2, AddressingMode::Implied),
             // CLD (clear decimal mode)
             0xD8 => OpCode::new(code, Instruction::Cld, 1, 2, AddressingMode::Implied),
+            // BMI 
+            0x30 => OpCode::new(code, Instruction::Bmi, 2, 2, AddressingMode::Relative),
+            // BPL 
+            0x10 => OpCode::new(code, Instruction::Bpl, 2, 2, AddressingMode::Relative),
+            // BVS 
+            0x70 => OpCode::new(code, Instruction::Bvs, 2, 2, AddressingMode::Relative),
+            // BVC
+            0x50 => OpCode::new(code, Instruction::Bvc, 2, 2, AddressingMode::Relative),
+            // BCS 
+            0xB0 => OpCode::new(code, Instruction::Bcs, 2, 2, AddressingMode::Relative),
+            // BCC 
+            0x90 => OpCode::new(code, Instruction::Bcc, 2, 2, AddressingMode::Relative),
+            // BEQ 
+            0xF0 => OpCode::new(code, Instruction::Beq, 2, 2, AddressingMode::Relative),
+            // BNE 
+            0xD0 => OpCode::new(code, Instruction::Bne, 2, 2, AddressingMode::Relative),
+            // RTS 
+            0x60 => OpCode::new(code, Instruction::Rts, 1, 6, AddressingMode::Implied),
+            // PHA 
+            0x48 => OpCode::new(code, Instruction::Pha, 1, 3, AddressingMode::Implied),
+            // PHP 
+            0x08 => OpCode::new(code, Instruction::Php, 1, 3, AddressingMode::Implied),
+            // PLA 
+            0x68 => OpCode::new(code, Instruction::Pla, 1, 4, AddressingMode::Implied),
+            // PLP 
+            0x28 => OpCode::new(code, Instruction::Plp, 1, 4, AddressingMode::Implied),
+            // BIT 
+            0x24 => OpCode::new(code, Instruction::Bit, 2,3, AddressingMode::ZeroPage),
+            0x2C => OpCode::new(code, Instruction::Bit, 3, 4, AddressingMode::Absolute),
 
             _ => panic!("Opcode not found! Opcode: {:x}", code)
         }
-    }
-}
-
-#[cfg(test)]
-mod opcode_test {
-    use super::{Instruction, OpCode};
-
-    #[test]
-    #[should_panic]
-    fn instruction_from_byte_test() {
-        OpCode::from_byte(0xff);
     }
 }

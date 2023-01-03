@@ -1,7 +1,4 @@
-// TODO: Remove this lint rules
-#![allow(unused)]
-
-use std::{cmp, fs, io::Read, ops::Deref, slice};
+use std::{fs, io::Read};
 use strum_macros::EnumIter;
 
 use crate::instructions::{Instruction, OpCode};
@@ -198,6 +195,7 @@ impl Nes {
         self.run()
     }
 
+    #[allow(unused)]
     fn run(&mut self) {
         // Main loop
         loop {
@@ -232,7 +230,7 @@ impl Nes {
                 // JMP
                 (Instruction::Jmp, _) => self.jmp(&opcode),
                 // JSR
-                (Instruction::Jsr, _) => todo!("Implement JSR instruction"),
+                (Instruction::Jsr, _) => self.jsr(&opcode),
                 // LDA
                 (Instruction::Lda, _) => self.lda(&opcode),
                 // LDX
@@ -248,7 +246,7 @@ impl Nes {
                 // ROR
                 (Instruction::Ror, _) => self.ror(&opcode),
                 // SBC
-                (Instruction::Sbc, _) => todo!("Implement SBC instruction"),
+                (Instruction::Sbc, _) => self.sbc(&opcode),
                 // STA
                 (Instruction::Sta, _) => self.sta(&opcode),
                 // STX
@@ -285,6 +283,56 @@ impl Nes {
                 (Instruction::Beq, _) => self.beq(&opcode),
                 // BNE
                 (Instruction::Bne, _) => self.bne(&opcode),
+                // TAX
+                (Instruction::Tax, _) => self.tax(),
+                // TAY
+                (Instruction::Tay, _) => self.tay(),
+                // TYA
+                (Instruction::Tya, _) => self.tya(),
+                // TXA
+                (Instruction::Txa, _) => self.txa(),
+                // TXS
+                (Instruction::Txs, _) => self.txs(),
+                // TSX
+                (Instruction::Tsx, _) => self.tsx(),
+                // INY
+                (Instruction::Iny, _) => self.iny(),
+                // INX
+                (Instruction::Inx, _) => self.inx(),
+                // DEY
+                (Instruction::Dey, _) => self.dey(),
+                // DEX
+                (Instruction::Dex, _) => self.dex(),
+                // BMI
+                (Instruction::Bmi, _) => self.bmi(&opcode),
+                // BPL
+                (Instruction::Bpl, _) => self.bpl(&opcode),
+                // BVS
+                (Instruction::Bvs, _) => self.bvs(&opcode),
+                // BVC
+                (Instruction::Bvc, _) => self.bvc(&opcode),
+                // BCS
+                (Instruction::Bcs, _) => self.bcs(&opcode),
+                // BCC
+                (Instruction::Bcc, _) => self.bcc(&opcode),
+                // BEQ
+                (Instruction::Beq, _) => self.beq(&opcode),
+                // BNE
+                (Instruction::Bne, _) => self.bne(&opcode),
+                // BIT
+                (Instruction::Bit, _) => self.bit(&opcode),
+                // RTS
+                (Instruction::Rts, _) => self.rts(),
+                // PHA
+                (Instruction::Pha, _) => self.pha(),
+                // PHP
+                (Instruction::Php, _) => self.php(),
+                // PLA
+                (Instruction::Pla, _) => self.pla(),
+                // PLP
+                (Instruction::Plp, _) => self.plp(),
+                // BIT
+                (Instruction::Bit, _) => self.bit(&opcode),
                 // Other
                 _ => todo!("Code: {:x?} not implemented!", code),
             };
@@ -342,33 +390,33 @@ impl Nes {
         self.mem_write_8(address, self.cpu.register_y)
     }
 
-    fn tax(&mut self, opcode: &OpCode) {
+    fn tax(&mut self) {
         self.cpu.register_x = self.cpu.accumulator;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
 
-    fn tay(&mut self, opcode: &OpCode) {
+    fn tay(&mut self) {
         self.cpu.register_y = self.cpu.accumulator;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_y);
     }
 
-    fn txa(&mut self, opcode: &OpCode) {
+    fn txa(&mut self) {
         self.cpu.accumulator = self.cpu.register_x;
         self.cpu
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn tya(&mut self, opcode: &OpCode) {
+    fn tya(&mut self) {
         self.cpu.accumulator = self.cpu.register_y;
         self.cpu
             .update_zero_and_negative_flags(self.cpu.accumulator);
     }
 
-    fn txs(&mut self, opcode: &OpCode) {
+    fn txs(&mut self) {
         self.cpu.stack_pointer = self.cpu.register_x;
     }
 
-    fn tsx(&mut self, opcode: &OpCode) {
+    fn tsx(&mut self) {
         self.cpu.register_x = self.cpu.stack_pointer;
         self.cpu.update_zero_and_negative_flags(self.cpu.register_x);
     }
@@ -447,28 +495,28 @@ impl Nes {
     }
 
     // Operations for incrementing and decrementing the index registers
-    fn inx(&mut self, opcode: &OpCode) {
+    fn inx(&mut self) {
         let (result, _) = self.cpu.register_x.overflowing_add(1);
 
         self.cpu.register_x = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn iny(&mut self, opcode: &OpCode) {
+    fn iny(&mut self) {
         let (result, _) = self.cpu.register_y.overflowing_add(1);
 
         self.cpu.register_y = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn dex(&mut self, opcode: &OpCode) {
+    fn dex(&mut self) {
         let (result, _) = self.cpu.register_x.overflowing_sub(1);
 
         self.cpu.register_x = result;
         self.cpu.update_zero_and_negative_flags(result);
     }
 
-    fn dey(&mut self, opcode: &OpCode) {
+    fn dey(&mut self) {
         let (result, _) = self.cpu.register_y.overflowing_sub(1);
 
         self.cpu.register_y = result;
@@ -842,6 +890,7 @@ pub enum AddressingMode {
     Implied,
     Accumulator,
     Immediate,
+    Relative,
     ZeroPage,
     ZeroPageX,
     ZeroPageY,
